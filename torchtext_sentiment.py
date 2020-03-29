@@ -1,9 +1,10 @@
-
 import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchtext
+import torchtext.vocab
+from torchtext.data import TabularDataset
 
 from utils import epoch_time
 from gru import GRU
@@ -46,7 +47,7 @@ def evaluate(model, iterator, criterion):
     return epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
-def train(model, iterator, optimizer, criterion):
+def train_epoch(model, iterator, optimizer, criterion):
     epoch_loss = 0
     epoch_acc = 0
 
@@ -71,15 +72,24 @@ def train(model, iterator, optimizer, criterion):
     return model, epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
-def create_embeddings(MAX_VOCAB_SIZE=10000,
-                      min_freq=10,
-                      pretrained=False,
-                      vectors=None,
-                      freeze_embeddings=False,
-                      model_name='sent_model'):
+def analyse_sentiments(MAX_VOCAB_SIZE=10000,
+                       min_freq=10,
+                       pretrained=False,
+                       vectors=None,
+                       freeze_embeddings=False,
+                       N_EPOCHS = 1,
+                       model_name='sent_model'):
     """
-    vectors
-    :return:
+
+    :param MAX_VOCAB_SIZE: maximum size of vocab as int
+    :param min_freq: minimum frequency of a token to be counted in the vocab (1- inf)
+    :param pretrained: boolean value to tell if using pretrained embeddings
+    :param vectors: vector array of pretrained embeddings
+    :param freeze_embeddings: boolean value telling if embedding layer will be freezed. True if layer
+    freexed, False = let embedding layer to be optimised while training. Freezing the layer decreases training time
+    :param N_EPOCHS: number of epochs to train as int
+    :param model_name: string name of the saved model
+    :return: test accuracy of the model
     """
 
     TEXT = torchtext.data.Field(tokenize='spacy',
@@ -87,26 +97,26 @@ def create_embeddings(MAX_VOCAB_SIZE=10000,
                                 lower=True)
     LABEL = torchtext.data.LabelField(dtype=torch.float)
     datafields = [('Sentiment', LABEL), ('SentimentText', TEXT)]
-    train, val, test = torchtext.data.TabularDataset.splits(path='data/',
-                                                            train='processed_train.csv',
-                                                            validation='processed_val.csv',
-                                                            test='processed_test.csv',
-                                                            format='csv',
-                                                            skip_header=True,
-                                                            fields=datafields)
+    train_set, val_set, test_set = TabularDataset.splits(path='data/',
+                                             train='processed_train.csv',
+                                            validation='processed_val.csv',
+                                            test='processed_test.csv',
+                                            format='csv',
+                                            skip_header=True,
+                                            fields=datafields)
 
     if pretrained:
-        TEXT.build_vocab(train, vectors=vectors,
+        TEXT.build_vocab(train_set, vectors=vectors,
                          max_size=MAX_VOCAB_SIZE, min_freq=min_freq)
     else:
-        TEXT.build_vocab(train, max_size=MAX_VOCAB_SIZE, min_freq=min_freq)
-    LABEL.build_vocab(train)
+        TEXT.build_vocab(train_set, max_size=MAX_VOCAB_SIZE, min_freq=min_freq)
+    LABEL.build_vocab(train_set)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     # minimise badding for each sentence
     train_iterator, val_iterator, test_iterator = torchtext.data.BucketIterator.splits(
-                                                                        (train, val, test),
+                                                                        (train_set, val_set, test_set),
                                                                         batch_size=64,
                                                                         sort_key=lambda x: len(x.SentimentText),
                                                                         sort_within_batch=False,
@@ -115,14 +125,18 @@ def create_embeddings(MAX_VOCAB_SIZE=10000,
     EMBEDDING_DIM = 100
     HIDDEN_DIM = 256
     OUTPUT_DIM = 1
-    n_layers = 2
+    N_LAYERS = 2
+    DROPOUT1 = 0.1
+    drop_out_dense = 0.4
     model = GRU(vocab_size=INPUT_DIM,
                 embedding_dim=EMBEDDING_DIM,
                 hidden_dim=HIDDEN_DIM,
                 output_dim=OUTPUT_DIM,
-                n_layers=n_layers,
+                n_layers=N_LAYERS,
                 bidirectional=True,
-                dropout=0.1)
+                dropout=DROPOUT1,
+                drop_out_dense=drop_out_dense
+                )
     print(model)
 
     if pretrained:
@@ -142,11 +156,10 @@ def create_embeddings(MAX_VOCAB_SIZE=10000,
     else:
         model.embedding.weight.requires_grad = True
 
-    N_EPOCHS = 10
     best_valid_loss = float('inf')
     for epoch in range(N_EPOCHS):
         start_time = time.time()
-        model, train_loss, train_acc = train(model, train_iterator, optimizer, criterion)
+        model, train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion)
         valid_loss, valid_acc = evaluate(model, val_iterator, criterion)
         end_time = time.time()
 
@@ -154,13 +167,16 @@ def create_embeddings(MAX_VOCAB_SIZE=10000,
 
         if valid_loss < best_valid_loss:
             best_valid_loss = valid_loss
-            torch.save(model.state_dict(), 'sent_model.pt')
+            torch.save(model.state_dict(), f"{model_name}.pt")
 
         print(f'Epoch: {epoch + 1:02} | Epoch Time: {epoch_mins}m {epoch_secs}s')
         print(f'\tTrain Loss: {train_loss:.3f} | Train Acc: {train_acc * 100:.2f}%')
         print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
 
-    model.load_state_dict(torch.load('sent_model.pt'))
+    model.load_state_dict(torch.load(f"{model_name}.pt"))
     print(model)
+
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
+
+    return test_loss, test_acc

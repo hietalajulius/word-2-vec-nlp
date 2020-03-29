@@ -1,5 +1,5 @@
 import torch
-import time
+
 
 def get_vector(embeddings, word):
     return embeddings.vectors(embeddings.stoi[word])
