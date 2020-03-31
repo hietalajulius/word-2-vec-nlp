@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchtext
 import torchtext.vocab
+from torchtext.vocab import Vectors
 from torchtext.data import TabularDataset
 
 from utils import epoch_time
@@ -106,10 +107,15 @@ def analyse_sentiments(MAX_VOCAB_SIZE=10000,
                                             fields=datafields)
 
     if pretrained:
-        TEXT.build_vocab(train_set, vectors=vectors,
-                         max_size=MAX_VOCAB_SIZE, min_freq=min_freq)
+        vectors = Vectors(name=f"{vectors}.kv")
+        TEXT.build_vocab(train_set,
+                         vectors=vectors,
+                         max_size=MAX_VOCAB_SIZE,
+                         min_freq=min_freq)
     else:
-        TEXT.build_vocab(train_set, max_size=MAX_VOCAB_SIZE, min_freq=min_freq)
+        TEXT.build_vocab(train_set,
+                         max_size=MAX_VOCAB_SIZE,
+                         min_freq=min_freq)
     LABEL.build_vocab(train_set)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -174,7 +180,7 @@ def analyse_sentiments(MAX_VOCAB_SIZE=10000,
         print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
 
     model.load_state_dict(torch.load(f"{model_name}.pt"))
-    print(model)
+    # print(model)
 
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
