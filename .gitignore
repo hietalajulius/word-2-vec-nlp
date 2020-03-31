@@ -1,6 +1,8 @@
 
 .idea
 .ipynb_checkpoints/
+.vector_cache
+initial_embeddings.kv
 data
 venv
 Jurafsky SNLP
