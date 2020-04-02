@@ -78,12 +78,12 @@ def analyse_sentiments(params=None,
                        model_name='sent_model',
                        embedding_dim=100):
     """
-
     :param params:
     :param N_EPOCHS:
     :param model_name:
     :return:
     """
+
     vectors = params['vectors']
     MAX_VOCAB_SIZE = params['MAX_VOCAB_SIZE']
     min_freq = params['min_freq']

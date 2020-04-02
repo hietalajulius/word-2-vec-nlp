@@ -29,7 +29,7 @@ def preprocess(text, stop_words, stem=False, stemmer=None):
     return " ".join(tokens)
 
 
-def preprocess_text(dataset_path):
+def preprocess_text(dataset_path, stem=False):
     """
 
     :param dataset_path:
@@ -48,7 +48,7 @@ def preprocess_text(dataset_path):
     stop_words = set(stopwords.words('english'))
     stemmer = SnowballStemmer("english")
 
-    df.text = df.text.apply(lambda x: preprocess(x, stop_words, stem=True, stemmer=stemmer))
+    df.text = df.text.apply(lambda x: preprocess(x, stop_words, stem=stem, stemmer=stemmer))
     # How to drop tweets which don't have any words left after processing?
     df.dropna(axis=0, inplace=True)
 
