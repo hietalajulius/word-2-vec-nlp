@@ -1,6 +1,7 @@
 import gensim
 import gensim.downloader as api
 
+from sklearn.model_selection import ParameterGrid
 from torchtext.vocab import GloVe
 
 
@@ -33,7 +34,7 @@ if PROCESS_DATASETS:
 # TODO WRITE A LOOP FOR DIFFERENT CASES
 
 N_EPOCHS = 10
-param_grid = [
+params = [
   {'MAX_VOCAB_SIZE': [10e3, 25e3],
    'min_freq': [1, 10],
    'freeze_embeddings': [True, False],
@@ -41,42 +42,35 @@ param_grid = [
    'vectors': ['glove_6B_100', 'word2vec_google_news_300']},
   {'MAX_VOCAB_SIZE': [10e3, 25e3],
    'min_freq': [1, 10],
-    'freeze_embeddings': [True, False],
+   'freeze_embeddings': [True, False],
    'pretrained': [False],
    'vectors': [None]}]
 
 i = 0
+
 if TRAINING_MODULE:
+    param_grid = list(ParameterGrid(params))
+    print(f"Number of items in parameter grid {len(param_grid)}")
+
     for param in param_grid:
         print(f"params {param}")
-        for MAX_VOCAB_SIZE in param['MAX_VOCAB_SIZE']:
-            for min_freq in param['min_freq']:
-                for freeze_embeddings in param['freeze_embeddings']:
-                    for pretrained in param['pretrained']:
-                        for vectors in param['vectors']:
-                            if vectors == None:
-                                model_name = f"own_{MAX_VOCAB_SIZE}_{min_freq}_freeze_{freeze_embeddings}"
-                            else:
-                                model_name = f"{vectors}_{MAX_VOCAB_SIZE}_{min_freq}_freeze_{freeze_embeddings}"
+        if param['vectors'] == None:
+            model_name = f"own_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
+        else:
+            model_name = f"{param['vectors']}_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
 
-                            print(f"{i}. Testing {model_name}")
-                            print(f"MAX_VOCAB_SIZE {MAX_VOCAB_SIZE},"
-                                  f"min_freq {min_freq},"
-                                  f"pretrained {pretrained},"
-                                  f"freeze_embeddings {freeze_embeddings}")
+        print(f"{i}. Testing {model_name}")
+        print(f"MAX_VOCAB_SIZE {param['MAX_VOCAB_SIZE']},"
+              f"min_freq {param['min_freq']},"
+              f"pretrained {param['pretrained']},"
+              f"freeze_embeddings {param['freeze_embeddings']}")
 
-                            """
-                            test_loss, test_acc = torchtext_sentiment.analyse_sentiments(MAX_VOCAB_SIZE=MAX_VOCAB_SIZE,
-                                                                                         min_freq=min_freq,
-                                                                                         pretrained=pretrained,
-                                                                                         vectors=vectors,
-                                                                                         freeze_embeddings=freeze_embeddings,
-                                                                                         N_EPOCHS=N_EPOCHS,
-                                                                                         model_name=model_name)
-                            
-                            print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
-                            
-                            """
-                            i += 1
+        EMBEDDING_DIM = 100
+        test_loss, test_acc = torchtext_sentiment.analyse_sentiments(params=param,
+                                                                     N_EPOCHS=N_EPOCHS,
+                                                                     model_name=model_name,
+                                                                     embedding_dim=EMBEDDING_DIM)
+
+        print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
 
 # TODO DO TESTS AND PLOT RESULTS

@@ -73,25 +73,23 @@ def train_epoch(model, iterator, optimizer, criterion):
     return model, epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
-def analyse_sentiments(MAX_VOCAB_SIZE=10000,
-                       min_freq=10,
-                       pretrained=False,
-                       vectors=None,
-                       freeze_embeddings=False,
+def analyse_sentiments(params=None,
                        N_EPOCHS = 1,
-                       model_name='sent_model'):
+                       model_name='sent_model',
+                       embedding_dim=100):
     """
 
-    :param MAX_VOCAB_SIZE: maximum size of vocab as int
-    :param min_freq: minimum frequency of a token to be counted in the vocab (1- inf)
-    :param pretrained: boolean value to tell if using pretrained embeddings
-    :param vectors: vector array of pretrained embeddings
-    :param freeze_embeddings: boolean value telling if embedding layer will be freezed. True if layer
-    freexed, False = let embedding layer to be optimised while training. Freezing the layer decreases training time
-    :param N_EPOCHS: number of epochs to train as int
-    :param model_name: string name of the saved model
-    :return: test accuracy of the model
+    :param params:
+    :param N_EPOCHS:
+    :param model_name:
+    :return:
     """
+    vectors = params['vectors']
+    MAX_VOCAB_SIZE = params['MAX_VOCAB_SIZE']
+    min_freq = params['min_freq']
+    pretrained = params['pretrained']
+    freeze_embeddings = params['freeze_embeddings']
+    EMBEDDING_DIM = embedding_dim
 
     TEXT = torchtext.data.Field(tokenize='spacy',
                                 tokenizer_language='en_core_web_sm',
@@ -128,7 +126,6 @@ def analyse_sentiments(MAX_VOCAB_SIZE=10000,
                                                                         sort_within_batch=False,
                                                                         device=device)
     INPUT_DIM = len(TEXT.vocab)
-    EMBEDDING_DIM = 100
     HIDDEN_DIM = 256
     OUTPUT_DIM = 1
     N_LAYERS = 2
