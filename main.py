@@ -13,7 +13,7 @@ import preprocessing
 ############
 
 CREATE_EMBEDDINGS = False
-PROCESS_DATASETS = False
+PROCESS_DATASETS = True
 TRAINING_MODULE = True
 
 # TODO CREATE OWN EMBEDDINGS
@@ -42,13 +42,14 @@ params = [
    'vectors': [None]}]
 
 params = [
-          {'MAX_VOCAB_SIZE': [3e3, 10e3, 25e3],
-           'min_freq': [1, 5, 10],
+          {'MAX_VOCAB_SIZE': [1000000],
+           'min_freq': [3],
            'freeze_embeddings': [False],
            'pretrained': [False],
            'vectors': [None]}]
 EMBEDDING_DIM = 100
-N_EPOCHS = 20
+N_EPOCHS = 1000
+RUN_NAME = '1000_epochs'
 if TRAINING_MODULE:
     param_grid = list(ParameterGrid(params))
     print(f"Number of items in parameter grid {len(param_grid)}")
@@ -56,9 +57,9 @@ if TRAINING_MODULE:
     for i, param in enumerate(param_grid):
         print(f"params {param}")
         if param['vectors'] == None:
-            model_name = f"own_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
+            model_name = f"own_{RUN_NAME}_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
         else:
-            model_name = f"{param['vectors']}_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
+            model_name = f"_{RUN_NAME}_{param['vectors']}_{param['MAX_VOCAB_SIZE']}_{param['min_freq']}_freeze_{param['freeze_embeddings']}"
         print(f"{i+1}/{len(param_grid)} testing {model_name}")
 
         start_time = time.time()

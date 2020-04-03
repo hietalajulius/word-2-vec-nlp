@@ -1,0 +1,31 @@
+name: snlp_env
+channels:
+- pytorch
+- defaults
+- conda-forge
+dependencies:
+- python=3.6.7
+- pandas=0.21.1
+- scipy=1.0.0
+- numpy=1.13.3
+- pytest=4.0.2
+- notebook=5.2.2
+- seaborn=0.8
+- pillow=4.3.0
+- freetype
+- matplotlib=2.0.2
+- scikit-learn
+- spyder
+- gensim
+- pip
+- pytorch==1.4.0
+- torchtext==0.4.0
+- torchvision==0.2.1
+- nbstripout
+- nltk
+- spacy
+- pip:
+  - configargparse==0.10.0
+  - tornado==4.5.3
+  - nbval
+  - https://github.com/jupyter/nbgrader/archive/48721e9.zip
