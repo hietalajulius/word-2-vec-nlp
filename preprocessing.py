@@ -35,7 +35,11 @@ def preprocess_text(dataset_path, stem=False):
     :param dataset_path:
     :return:
     """
-
+    print(f"Preprocessing twitter dataset. "
+          f"Removing stop words and cleaning hastags etc."
+          f"")
+    if stem:
+        print(f"Applying stemmer")
     DATASET_COLUMNS = ["target", "ids", "date", "flag", "user", "text"]
     DATASET_ENCODING = "ISO-8859-1"
     # dataset_path = r'train.csv'
@@ -49,7 +53,9 @@ def preprocess_text(dataset_path, stem=False):
     stemmer = SnowballStemmer("english")
 
     df.text = df.text.apply(lambda x: preprocess(x, stop_words, stem=stem, stemmer=stemmer))
-    # How to drop tweets which don't have any words left after processing?
+
+    print(f"Preprocessing results in empty tweets. How do we drop empty sentences from dataset?")
+    # How to drop tweets which don't have any words left after processing? dropna does not work
     df.dropna(axis=0, inplace=True)
 
     # Split in to train val test

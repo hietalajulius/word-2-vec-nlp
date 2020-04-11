@@ -4,11 +4,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torchtext
 import torchtext.vocab
-from torchtext.vocab import Vectors
+
 from torchtext.data import TabularDataset
 
+from embeddings import load_vectors
 from utils import epoch_time
-from gru import GRU
+from gru import RNNModel
 
 
 def binary_accuracy(preds, y):
@@ -34,7 +35,9 @@ def evaluate(model, iterator, criterion):
         for batch in iterator:
             # print(batch.SentimentText)
             if batch.SentimentText.nelement() > 0:
-                predictions = model(batch.SentimentText).squeeze(1)
+
+                text_lengths = [len(seq) for seq in batch.SentimentText]
+                predictions = model(batch.SentimentText, text_lengths)
 
                 loss = criterion(predictions, batch.Sentiment)
 
@@ -48,23 +51,28 @@ def evaluate(model, iterator, criterion):
     return epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
-def train_epoch(model, iterator, optimizer, criterion):
+def train_epoch(model, iterator, optimizer, criterion, device):
     epoch_loss = 0
     epoch_acc = 0
 
     model.train()
-
-    for batch in iterator:
+    #
+    for text, y in iterator:
         optimizer.zero_grad()
 
-        predictions = model(batch.SentimentText).squeeze(1)
-
-        loss = criterion(predictions, batch.Sentiment)
-
-        acc = binary_accuracy(predictions, batch.Sentiment)
+        # print(f"text is {text}")
+        # print(f"text.shape is {text.shape}")
+        text_lengths = [len(seq) for seq in text]
+        # print(f"text_lengths is {text_lengths}")
+        batch_size_var = text.size(0)
+        # print(f"batch_size_var {batch_size_var}")
+        model.init_hidden(batch_size_var, device)
+        predictions = model(text, text_lengths)
+        # predictions = model(batch.SentimentText).squeeze(1)
+        loss = criterion(predictions, y)
+        acc = binary_accuracy(predictions, y)
 
         loss.backward()
-
         optimizer.step()
 
         epoch_loss += loss.item()
@@ -74,9 +82,7 @@ def train_epoch(model, iterator, optimizer, criterion):
 
 
 def analyse_sentiments(params=None,
-                       N_EPOCHS = 1,
-                       model_name='sent_model',
-                       embedding_dim=100):
+                       model_name=''):
     """
     :param params:
     :param N_EPOCHS:
@@ -84,32 +90,46 @@ def analyse_sentiments(params=None,
     :return:
     """
 
-    vectors = params['vectors']
+    vector_name = params['vectors']
     MAX_VOCAB_SIZE = params['MAX_VOCAB_SIZE']
     min_freq = params['min_freq']
     pretrained = params['pretrained']
-    freeze_embeddings = params['freeze_embeddings']
-    EMBEDDING_DIM = embedding_dim
+    EMBEDDING_DIM = params['embedding_dim']
+
+    FREEZE_EMDEDDINGS = params['RNN_FREEZE_EMDEDDINGS']
+    HIDDEN_DIM = params['RNN_HIDDEN_DIM']  # model_params['RNN_HIDDEN_DIM']
+    OUTPUT_DIM = 1  # params['OUTPUT_DIM']
+    N_LAYERS = params['RNN_N_LAYERS']   # model_params['RNN_N_LAYERS']
+    DROPOUT = params['RNN_DROPOUT']   # model_params['RNN_DROPOUT']
+    USE_GRU = params['RNN_USE_GRU']  # model_params['RNN_USE_GRU']
+    N_EPOCHS = params['EPOCHS']
+    BATCH_SIZE = 64
+
 
     TEXT = torchtext.data.Field(tokenize='spacy',
                                 tokenizer_language='en_core_web_sm',
-                                lower=True)
+                                lower=True,
+                                pad_first=True,
+                                batch_first=True
+                                )
     LABEL = torchtext.data.LabelField(dtype=torch.float)
     datafields = [('Sentiment', LABEL), ('SentimentText', TEXT)]
     train_set, val_set, test_set = TabularDataset.splits(path='data/',
-                                             train='processed_train.csv',
-                                            validation='processed_val.csv',
-                                            test='processed_test.csv',
-                                            format='csv',
-                                            skip_header=True,
-                                            fields=datafields)
+                                    train='processed_train.csv',
+                                    validation='processed_val.csv',
+                                    test='processed_test.csv',
+                                    format='csv',
+                                    skip_header=True,
+                                    fields=datafields)
 
     if pretrained:
-        vectors = Vectors(name=f"{vectors}.kv")
-        TEXT.build_vocab(train_set,
-                         vectors=vectors,
-                         max_size=MAX_VOCAB_SIZE,
-                         min_freq=min_freq)
+        vectors = load_vectors(fname=vector_name)
+        TEXT.build_vocab(
+                        train_set,
+                        max_size=MAX_VOCAB_SIZE,
+                        min_freq=min_freq,
+                        vectors=vectors
+        )
     else:
         TEXT.build_vocab(train_set,
                          max_size=MAX_VOCAB_SIZE,
@@ -121,25 +141,21 @@ def analyse_sentiments(params=None,
     # minimise badding for each sentence
     train_iterator, val_iterator, test_iterator = torchtext.data.BucketIterator.splits(
                                                                         (train_set, val_set, test_set),
-                                                                        batch_size=64,
+                                                                        batch_size=BATCH_SIZE,
                                                                         sort_key=lambda x: len(x.SentimentText),
                                                                         sort_within_batch=False,
                                                                         device=device)
+
     INPUT_DIM = len(TEXT.vocab)
-    HIDDEN_DIM = 256
-    OUTPUT_DIM = 1
-    N_LAYERS = 2
-    DROPOUT1 = 0.1
-    drop_out_dense = 0.4
-    model = GRU(vocab_size=INPUT_DIM,
-                embedding_dim=EMBEDDING_DIM,
-                hidden_dim=HIDDEN_DIM,
-                output_dim=OUTPUT_DIM,
-                n_layers=N_LAYERS,
-                bidirectional=True,
-                dropout=DROPOUT1,
-                drop_out_dense=drop_out_dense
-                )
+    model = RNNModel(vocab_size=INPUT_DIM,
+                    embedding_dim=EMBEDDING_DIM,
+                    hidden_dim=HIDDEN_DIM,
+                    output_dim=OUTPUT_DIM,
+                    n_layers=N_LAYERS,
+                    bidirectional=True,
+                    dropout=DROPOUT,
+                    use_gru=USE_GRU
+                    )
     print(model)
 
     if pretrained:
@@ -154,7 +170,7 @@ def analyse_sentiments(params=None,
     criterion = criterion.to(device)
 
     # freeze embeddings
-    if freeze_embeddings:
+    if FREEZE_EMDEDDINGS:
         model.embedding.weight.requires_grad = False
     else:
         model.embedding.weight.requires_grad = True
@@ -162,7 +178,7 @@ def analyse_sentiments(params=None,
     best_valid_loss = float('inf')
     for epoch in range(N_EPOCHS):
         start_time = time.time()
-        model, train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion)
+        model, train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion, device)
         valid_loss, valid_acc = evaluate(model, val_iterator, criterion)
         end_time = time.time()
 
