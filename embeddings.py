@@ -3,7 +3,7 @@ from gensim.test.utils import datapath
 from gensim import utils
 import os
 import pandas as pd
-from torchtext.vocab import GloVe
+
 from torchtext.vocab import Vectors
 
 class MyCorpus(object):
@@ -61,7 +61,10 @@ def create_embeddings(embedding_params, i):
     w2v_model.build_vocab(sentences, progress_per=100000)
     w2v_model.train(sentences, total_examples=w2v_model.corpus_count, epochs=iters, report_delay=1)
 
-    save_name = f"word2vec_twitter_v{i}.mdl"
+    if use_skip_gram:
+        save_name = f"word2vec_twitter_skigram_v{vector_size}.mdl"
+    else:
+        save_name = f"word2vec_twitter_cbow_v{vector_size}.mdl"
     print(f"save_name {save_name}")
     path_to_embeddings_file = os.getcwd()
     path_to_embeddings_file = os.path.join(path_to_embeddings_file, "data")

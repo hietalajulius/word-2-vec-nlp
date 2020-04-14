@@ -45,12 +45,6 @@ class RNNModel(nn.Module):
         packed_output, self.hidden = self.rnn(packed_embedded, self.hidden)
         # output, output_lengths = pad_packed_sequence(packed_output)
 
-        """
-        print(f"self.hidden[-2, :, :] {self.hidden[-2, :, :].shape}")
-        print(f"self.hidden[-1, :, :] {self.hidden[-1, :, :].shape}")
-        print(f"torch.cat((self.hidden[-2, :, :], self.hidden[-1, :, :]), dim=1) "
-              f"{torch.cat((self.hidden[-2, :, :], self.hidden[-1, :, :]), dim=1).shape}")
-        """
         if self.use_gru:
             x = self.dropout(torch.cat((self.hidden[-2, :, :], self.hidden[-1, :, :]), dim=1))
         else:

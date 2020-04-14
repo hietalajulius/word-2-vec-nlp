@@ -1,11 +1,12 @@
 
 import nltk
-#nltk.download('punkt')
-#nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('stopwords')
 from nltk.corpus import stopwords
 from  nltk.stem import SnowballStemmer
 
 from sklearn.model_selection import train_test_split
+import numpy as np
 import pandas as pd
 import re
 
@@ -58,10 +59,25 @@ def preprocess_text(dataset_path, stem=False):
     # How to drop tweets which don't have any words left after processing? dropna does not work
     df.dropna(axis=0, inplace=True)
 
+    print(f"Splitting data")
     # Split in to train val test
-    df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True)
-    df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True)
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True, stratify=df.target)
+    df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True, stratify=df_train.target)
 
     df_train.to_csv("data/processed_train.csv", index=False)
     df_val.to_csv("data/processed_val.csv", index=False)
     df_test.to_csv("data/processed_test.csv", index=False)
+
+    neg_samples = np.sum(df_train.target == 0)
+    pos_samples = np.sum(df_train.target == 1)
+
+    neg_samples2 = np.sum(df_val.target == 0)
+    pos_samples2 = np.sum(df_val.target == 1)
+
+    neg_samples3 = np.sum(df_test.target == 0)
+    pos_samples3 = np.sum(df_test.target == 1)
+
+    print(f"Total tweets {df.shape[0]}")
+    print(f"Train negative: {neg_samples} - positive {pos_samples}")
+    print(f"Val negative: {neg_samples2} - positive {pos_samples2}")
+    print(f"Test negative: {neg_samples3} - positive {pos_samples3}")

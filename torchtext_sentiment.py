@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchtext
 import torchtext.vocab
-
+from torchtext.vocab import GloVe
 from torchtext.data import TabularDataset
 
 from embeddings import load_vectors
@@ -22,6 +22,44 @@ def binary_accuracy(preds, y):
     correct = (rounded_preds == y).float() #convert into float for division
     acc = correct.sum() / len(correct)
     return acc
+
+
+def evaluate_slack(classifier, testloader, print_every, device):
+    """
+    :param classifier:
+    :param testloader:
+    :param print_every:
+    :return:
+    """
+    classifier.eval()
+    negative = 0
+    positive = 0
+    total = 0
+    pos_scores = {}
+    neg_scores = {}
+
+    with torch.no_grad():
+        for i, (pad_input_seqs, input_seq_lengths, targets) in enumerate(testloader):
+            batch_size = pad_input_seqs.size(1)
+
+            pad_input_seqs = pad_input_seqs.to(device)
+
+            init_hidden = classifier.init_hidden(batch_size, device)
+            output = classifier(pad_input_seqs, input_seq_lengths, init_hidden)
+
+            out_flat = output.detach().numpy().argmax(axis=2)
+            predicted = torch.tensor(out_flat)
+
+            total += targets.size(0)
+            positive += (predicted == 1).sum().item()
+            negative += (predicted == 0).sum().item()
+
+            pos_scores.update({i: output.numpy().flatten()[1]})
+            neg_scores.update({i: output.numpy().flatten()[0]})
+
+            if (total % print_every == 0):
+                print("Counted:", total, "positive", positive / total, "negative", negative / total)
+    return positive, negative, total, pos_scores, neg_scores
 
 
 def evaluate(model, iterator, criterion):
@@ -124,11 +162,14 @@ def analyse_sentiments(params=None,
 
     if pretrained:
         vectors = load_vectors(fname=vector_name)
+
+        # vectors = GloVe(name="6B", dim=100)
         TEXT.build_vocab(
                         train_set,
                         max_size=MAX_VOCAB_SIZE,
                         min_freq=min_freq,
-                        vectors=vectors
+                        vectors=vectors,
+                        unk_init=torch.Tensor.normal_
         )
     else:
         TEXT.build_vocab(train_set,
@@ -192,9 +233,9 @@ def analyse_sentiments(params=None,
         print(f'\tTrain Loss: {train_loss:.3f} | Train Acc: {train_acc * 100:.2f}%')
         print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
 
+    # Evaluate model performance
     model.load_state_dict(torch.load(f"{model_name}.pt"))
     # print(model)
-
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
 
