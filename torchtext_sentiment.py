@@ -140,8 +140,8 @@ def analyse_sentiments(params=None,
     N_LAYERS = params['RNN_N_LAYERS']   # model_params['RNN_N_LAYERS']
     DROPOUT = params['RNN_DROPOUT']   # model_params['RNN_DROPOUT']
     USE_GRU = params['RNN_USE_GRU']  # model_params['RNN_USE_GRU']
-    N_EPOCHS = params['EPOCHS']
-    BATCH_SIZE = 64
+    N_EPOCHS = params['RNN_EPOCHS']
+    BATCH_SIZE = params['RNN_BATCH_SIZE']
 
 
     TEXT = torchtext.data.Field(tokenize='spacy',
@@ -187,6 +187,7 @@ def analyse_sentiments(params=None,
                                                                         sort_within_batch=False,
                                                                         device=device)
 
+    pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
     INPUT_DIM = len(TEXT.vocab)
     model = RNNModel(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
@@ -195,26 +196,29 @@ def analyse_sentiments(params=None,
                     n_layers=N_LAYERS,
                     bidirectional=True,
                     dropout=DROPOUT,
-                    use_gru=USE_GRU
-                    )
+                    pad_idx=pad_idx,
+                    use_gru=USE_GRU)
     print(model)
 
     if pretrained:
+        vectors = TEXT.vocab.vectors
+        print(vectors.shape)
+        model.embedding.weight.data.copy_(vectors)
+
         unk_idx = TEXT.vocab.stoi[TEXT.unk_token]
-        pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
         model.embedding.weight.data[unk_idx] = torch.zeros(EMBEDDING_DIM)
         model.embedding.weight.data[pad_idx] = torch.zeros(EMBEDDING_DIM)
-
-    optimizer = optim.SGD(model.parameters(), lr=1e-3)
-    criterion = nn.BCEWithLogitsLoss()
-    model = model.to(device)
-    criterion = criterion.to(device)
 
     # freeze embeddings
     if FREEZE_EMDEDDINGS:
         model.embedding.weight.requires_grad = False
     else:
         model.embedding.weight.requires_grad = True
+
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    criterion = nn.BCEWithLogitsLoss()
+    model = model.to(device)
+    criterion = criterion.to(device)
 
     best_valid_loss = float('inf')
     for epoch in range(N_EPOCHS):

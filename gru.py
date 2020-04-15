@@ -7,7 +7,7 @@ class RNNModel(nn.Module):
     
     """
     def __init__(self, vocab_size, embedding_dim, hidden_dim,
-                 output_dim, n_layers, bidirectional, dropout, use_gru=True):
+                 output_dim, n_layers, bidirectional, dropout, pad_idx, use_gru=True):
         super().__init__()
         self.n_hidden = hidden_dim
         self.n_layers = n_layers
@@ -17,20 +17,20 @@ class RNNModel(nn.Module):
         else:
             self.direction = 1
 
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=pad_idx)
         if use_gru:
             self.rnn = nn.GRU(embedding_dim,
                               hidden_dim,
                               num_layers=n_layers,
                               bidirectional=bidirectional,
-                              dropout=dropout,
+                              dropout = 0 if n_layers < 2 else dropout,
                               batch_first=True)
         else:
             self.rnn = nn.LSTM(embedding_dim,
                                 hidden_dim,
                                 num_layers=n_layers,
                                 bidirectional=bidirectional,
-                                dropout=dropout,
+                                dropout=0 if n_layers < 2 else dropout,
                                 batch_first=True)
         if bidirectional:
             self.fc = nn.Linear(hidden_dim * 2, output_dim)

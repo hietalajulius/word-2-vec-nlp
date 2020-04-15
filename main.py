@@ -5,30 +5,8 @@ import time
 from embeddings import create_embeddings
 from torchtext_sentiment import analyse_sentiments
 from preprocessing import preprocess_text
+from utils import get_model_name
 
-
-def get_model_name(param):
-    """
-    name = vector_name + num_epochs + rnn_number_of_layers + rnn_dropout + GRU/LSTM
-    separated by underscore
-    :param param:
-    :return:
-    """
-    if param['vectors'] == None:
-        model_name = f"own"
-    else:
-        model_name = f"{param['vectors'].split('.')[0]}"
-
-    if param['RNN_USE_GRU']:
-        model_name += f"_GRU"
-    else:
-        model_name += f"_LSTM"
-
-    model_name += f"_{param['EPOCHS']}_epochs" \
-                  f"_{param['RNN_N_LAYERS']}"
-
-
-    return model_name
 
 # INPUTS
 ############
@@ -46,14 +24,14 @@ if PROCESS_DATASETS:
 if CREATE_EMBEDDINGS:
     # TODO CREATE OWN EMBEDDINGS
     embedding_params = [{
-        'min_count': [3],  # valitaan tähän vakioarvo
-        'max_vocab_size': [50e3],  # valitaan tähän vakioarvo, esim. 50k
-        'window_size': [5],  # Testataanko: [5, 10] for skip-gram usually around 10, for CBOW around 5
-         'vector_size': [100],  # Testataanko [10, 100, 300]
+        'min_count': [10],  # valitaan tähän vakioarvo
+        'max_vocab_size': [100e3],  # valitaan tähän vakioarvo, esim. 50k
+        'window_size': [7],  # Testataanko: [5, 10] for skip-gram usually around 10, for CBOW around 5
+         'vector_size': [300],  # Testataanko [10, 100, 300]
          'noise_words': [3],  # for large datasets between 2-5 valitaan yksi
-         'use_skip_gram': [0],  # 1 for skip-gram, 0 for CBOW, testi molemmilla?
+         'use_skip_gram': [0, 1],  # 1 for skip-gram, 0 for CBOW, testi molemmilla?
          'cbow_mean': [0],  # if using cbow
-         'w2v_iters': [10]  # onko tarpeeksi?
+         'w2v_iters': [32]  # onko tarpeeksi?
          }]
 
     param_grid_emb = list(ParameterGrid(embedding_params))
@@ -66,17 +44,18 @@ if CREATE_EMBEDDINGS:
 
 if TRAINING_MODULE:
     params = [
-        {'MAX_VOCAB_SIZE': [50e3],  # needs to match pretrained word2vec model params
-         'min_freq': [1],  # needs to match pretrained word2vec model params
-         'embedding_dim': [100],  # needs to match pretrained word2vec model params
+        {'MAX_VOCAB_SIZE': [100e3],  # needs to match pretrained word2vec model params
+         'min_freq': [10],  # needs to match pretrained word2vec model params
+         'embedding_dim': [300],  # needs to match pretrained word2vec model params
          'pretrained': [True],
-         'vectors': ['word2vec_twitter_v0.mdl'],  # needs to match pretrained word2vec model params
+         'vectors': ['word2vec_twitter_cbow_v300.mdl', 'word2vec_twitter_skipgram_v300.mdl'],  # needs to match pretrained word2vec model params
          'RNN_FREEZE_EMDEDDINGS': [False],
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
          'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
          'RNN_DROPOUT': [0.4],  # 0.4
-         'RNN_USE_GRU': [True],  # False -> use LSTM
-         'EPOCHS' : [10]  # onko riittävä?
+         'RNN_USE_GRU': [True],  # True: use GRU, False: use LSTM
+         'RNN_BATCH_SIZE': [1024],  #Kagglessa käytettiin 1024
+         'RNN_EPOCHS': [10]  # onko riittävä?
          }]
 
     param_grid = list(ParameterGrid(params))
