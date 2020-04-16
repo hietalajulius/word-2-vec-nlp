@@ -62,7 +62,7 @@ def create_embeddings(embedding_params, i):
     w2v_model.train(sentences, total_examples=w2v_model.corpus_count, epochs=iters, report_delay=1)
 
     if use_skip_gram:
-        save_name = f"word2vec_twitter_skigram_v{vector_size}.mdl"
+        save_name = f"word2vec_twitter_skipgram_v{vector_size}.mdl"
     else:
         save_name = f"word2vec_twitter_cbow_v{vector_size}.mdl"
     print(f"save_name {save_name}")

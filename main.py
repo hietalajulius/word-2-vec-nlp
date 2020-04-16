@@ -10,7 +10,7 @@ from utils import get_model_name
 
 # INPUTS
 ############
-PROCESS_DATASETS = True
+PROCESS_DATASETS = False
 CREATE_EMBEDDINGS = True
 TRAINING_MODULE = True
 
@@ -27,7 +27,7 @@ if CREATE_EMBEDDINGS:
         'min_count': [10],  # valitaan tähän vakioarvo
         'max_vocab_size': [100e3],  # valitaan tähän vakioarvo, esim. 50k
         'window_size': [7],  # Testataanko: [5, 10] for skip-gram usually around 10, for CBOW around 5
-         'vector_size': [300],  # Testataanko [10, 100, 300]
+         'vector_size': [100],  # Testataanko [10, 100, 300]
          'noise_words': [3],  # for large datasets between 2-5 valitaan yksi
          'use_skip_gram': [0, 1],  # 1 for skip-gram, 0 for CBOW, testi molemmilla?
          'cbow_mean': [0],  # if using cbow
@@ -46,21 +46,22 @@ if TRAINING_MODULE:
     params = [
         {'MAX_VOCAB_SIZE': [100e3],  # needs to match pretrained word2vec model params
          'min_freq': [10],  # needs to match pretrained word2vec model params
-         'embedding_dim': [300],  # needs to match pretrained word2vec model params
+         'embedding_dim': [100],  # only needed if not pretrained
          'pretrained': [True],
-         'vectors': ['word2vec_twitter_cbow_v300.mdl', 'word2vec_twitter_skipgram_v300.mdl'],  # needs to match pretrained word2vec model params
-         'RNN_FREEZE_EMDEDDINGS': [False],
+         'vectors': ['word2vec_twitter_skigram_v100.mdl', 'word2vec_twitter_cbow_v100.mdl'],  # needs to match pretrained word2vec model params
+         'RNN_FREEZE_EMDEDDINGS': [True, False],
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
-         'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
+         'RNN_N_LAYERS': [1, 3],  # 3 layers in  Howard et. al (2018)
          'RNN_DROPOUT': [0.4],  # 0.4
-         'RNN_USE_GRU': [True],  # True: use GRU, False: use LSTM
-         'RNN_BATCH_SIZE': [1024],  #Kagglessa käytettiin 1024
+         'RNN_USE_GRU': [True, False],  # True: use GRU, False: use LSTM
+         'RNN_BATCH_SIZE': [64],  #Kagglessa käytettiin 1024
          'RNN_EPOCHS': [10]  # onko riittävä?
          }]
 
     param_grid = list(ParameterGrid(params))
     print(f"Number of items in parameter grid {len(param_grid)}")
 
+    test_accs = []
     for i, param in enumerate(param_grid):
         print(f"params {param}")
         model_name = get_model_name(param)
@@ -71,4 +72,10 @@ if TRAINING_MODULE:
         end_time = time.time()
         print(f"Training lasted for {round((end_time - start_time) / 60, 1)} min")
 
+        test_accs.append(test_acc)
+
     # TODO DO TESTS AND PLOT RESULT
+
+for i, param in enumerate(param_grid):
+    print(f"param {param}")
+    print(f"test accuracy: {test_accs[i]}")

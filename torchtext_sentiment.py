@@ -171,6 +171,7 @@ def analyse_sentiments(params=None,
                         vectors=vectors,
                         unk_init=torch.Tensor.normal_
         )
+
     else:
         TEXT.build_vocab(train_set,
                          max_size=MAX_VOCAB_SIZE,
@@ -189,6 +190,11 @@ def analyse_sentiments(params=None,
 
     pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
     INPUT_DIM = len(TEXT.vocab)
+    vectors = TEXT.vocab.vectors
+    print(vectors.shape)
+    print(vectors.shape[1])
+    EMBEDDING_DIM = vectors.shape[1]
+    print(f"Emdebbing dim is {EMBEDDING_DIM}")
     model = RNNModel(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
                     hidden_dim=HIDDEN_DIM,
@@ -201,8 +207,6 @@ def analyse_sentiments(params=None,
     print(model)
 
     if pretrained:
-        vectors = TEXT.vocab.vectors
-        print(vectors.shape)
         model.embedding.weight.data.copy_(vectors)
 
         unk_idx = TEXT.vocab.stoi[TEXT.unk_token]
