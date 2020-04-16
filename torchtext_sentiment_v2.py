@@ -167,7 +167,7 @@ def analyse_sentiments(params=None,
                                     fields=datafields)
 
     if pretrained:
-        vectors = load_vectors(fname=vector_name)
+        # vectors = load_vectors(fname=vector_name)
 
         # vectors = GloVe(name="6B", dim=100)
         vectors = 'glove.twitter.27B.100d'
