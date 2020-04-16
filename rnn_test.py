@@ -47,7 +47,7 @@ if TRAINING_MODULE:
         {'MAX_VOCAB_SIZE': [100e3],  # needs to match pretrained word2vec model params
          'min_freq': [1],  # needs to match pretrained word2vec model params
          'embedding_dim': [100],  # only needed if not pretrained
-         'pretrained': [False],
+         'pretrained': [True],
          'vectors': ['word2vec_twitter_skipgram_v100.mdl'],  # needs to match pretrained word2vec model params
          'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
