@@ -171,11 +171,14 @@ def analyse_sentiments(params=None,
                         vectors=vectors,
                         unk_init=torch.Tensor.normal_
         )
-
+        vectors = TEXT.vocab.vectors
+        print(vectors.shape)
+        print(vectors.shape[1])
+        EMBEDDING_DIM = vectors.shape[1]
     else:
         TEXT.build_vocab(train_set,
-                         max_size=MAX_VOCAB_SIZE,
-                         min_freq=min_freq)
+                         max_size=MAX_VOCAB_SIZE)
+
     LABEL.build_vocab(train_set)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -190,11 +193,7 @@ def analyse_sentiments(params=None,
 
     pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
     INPUT_DIM = len(TEXT.vocab)
-    vectors = TEXT.vocab.vectors
-    print(vectors.shape)
-    print(vectors.shape[1])
-    EMBEDDING_DIM = vectors.shape[1]
-    print(f"Emdebbing dim is {EMBEDDING_DIM}")
+    print(f"Vocab size is {INPUT_DIM}, emdebbing dim is {EMBEDDING_DIM}")
     model = RNNModel(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
                     hidden_dim=HIDDEN_DIM,
@@ -209,9 +208,9 @@ def analyse_sentiments(params=None,
     if pretrained:
         model.embedding.weight.data.copy_(vectors)
 
-        unk_idx = TEXT.vocab.stoi[TEXT.unk_token]
-        model.embedding.weight.data[unk_idx] = torch.zeros(EMBEDDING_DIM)
-        model.embedding.weight.data[pad_idx] = torch.zeros(EMBEDDING_DIM)
+    unk_idx = TEXT.vocab.stoi[TEXT.unk_token]
+    model.embedding.weight.data[unk_idx] = torch.zeros(EMBEDDING_DIM)
+    model.embedding.weight.data[pad_idx] = torch.zeros(EMBEDDING_DIM)
 
     # freeze embeddings
     if FREEZE_EMDEDDINGS:
