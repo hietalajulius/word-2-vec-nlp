@@ -104,7 +104,10 @@ def train_epoch(model, iterator, optimizer, criterion, device):
         # print(f"text_lengths is {text_lengths}")
         batch_size_var = text.size(0)
         # print(f"batch_size_var {batch_size_var}")
-        model.init_hidden(batch_size_var, device)
+
+
+        # model.init_hidden(batch_size_var, device)
+
 
         predictions = model(text, text_lengths)
         # predictions = model(batch.SentimentText).squeeze(1)
@@ -145,8 +148,7 @@ def analyse_sentiments(params=None,
     BATCH_SIZE = params['RNN_BATCH_SIZE']
 
 
-    TEXT = torchtext.data.Field(
-                                lower=True,
+    TEXT = torchtext.data.Field(lower=True,
                                 pad_first=True,
                                 batch_first=True,
                                 init_token='<sos>',
@@ -164,8 +166,9 @@ def analyse_sentiments(params=None,
 
     if pretrained:
         vectors = load_vectors(fname=vector_name)
+
         # vectors = GloVe(name="6B", dim=100)
-        # vectors = 'glove.twitter.27B.100d'
+        #vectors = 'glove.twitter.27B.100d'
         TEXT.build_vocab(
                         train_set,
                         vectors=vectors,
@@ -194,7 +197,7 @@ def analyse_sentiments(params=None,
     pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
     INPUT_DIM = len(TEXT.vocab)
     print(f"Vocab size is {INPUT_DIM}, emdebbing dim is {EMBEDDING_DIM}")
-    model = RNNModel(vocab_size=INPUT_DIM,
+    model = RNNModel2(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
                     hidden_dim=HIDDEN_DIM,
                     output_dim=OUTPUT_DIM,
