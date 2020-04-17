@@ -44,10 +44,10 @@ if CREATE_EMBEDDINGS:
 
 if TRAINING_MODULE:
     params = [
-        {'MAX_VOCAB_SIZE': [100e3],  # needs to match pretrained word2vec model params
+        {'MAX_VOCAB_SIZE': [200e3],  # needs to match pretrained word2vec model params
          'min_freq': [1],  # needs to match pretrained word2vec model params
          'embedding_dim': [100],  # only needed if not pretrained
-         'pretrained': [True],
+         'pretrained': [False],
          'vectors': ['word2vec_twitter_skipgram_v100.mdl'],  # needs to match pretrained word2vec model params
          'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
@@ -55,7 +55,7 @@ if TRAINING_MODULE:
          'RNN_DROPOUT': [0.4, 0.5],  # 0.4
          'RNN_USE_GRU': [False, True],  # True: use GRU, False: use LSTM
          'RNN_BATCH_SIZE': [64],  # Kagglessa käytettiin 1024
-         'RNN_EPOCHS': [20]  # onko riittävä?
+         'RNN_EPOCHS': [5]  # onko riittävä?
          }]
 
     param_grid = list(ParameterGrid(params))
