@@ -145,8 +145,7 @@ def analyse_sentiments(params=None,
     BATCH_SIZE = params['RNN_BATCH_SIZE']
 
 
-    TEXT = torchtext.data.Field(tokenize='spacy',
-                                tokenizer_language='en_core_web_sm',
+    TEXT = torchtext.data.Field(
                                 lower=True,
                                 pad_first=True,
                                 batch_first=True,

@@ -44,7 +44,7 @@ if CREATE_EMBEDDINGS:
 
 if TRAINING_MODULE:
     params = [
-        {'MAX_VOCAB_SIZE': [200e3],  # needs to match pretrained word2vec model params
+        {'MAX_VOCAB_SIZE': [500e3],  # needs to match pretrained word2vec model params
          'min_freq': [1],  # needs to match pretrained word2vec model params
          'embedding_dim': [100],  # only needed if not pretrained
          'pretrained': [False],
