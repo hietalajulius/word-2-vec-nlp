@@ -162,6 +162,9 @@ def analyse_sentiments(params=None,
                                 init_token='<sos>',
                                 eos_token='<eos>'
                                 )
+
+    print(f"Most frequent words in vocab. {TEXT.vocab.freqs.most_common(20)}")
+
     LABEL = torchtext.data.LabelField(dtype=torch.float)
     datafields = [('Sentiment', LABEL), ('SentimentText', TEXT)]
     train_set, val_set, test_set = TabularDataset.splits(path='data/',
