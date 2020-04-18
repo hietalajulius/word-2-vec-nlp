@@ -54,8 +54,9 @@ def preprocess_text(dataset_path, remove_stop_words=False):
         df.text = df.text.apply(lambda x: preprocess(x))
     
 
-    print(f"Preprocessing results in empty tweets. How do we drop empty sentences from dataset?")
-    # How to drop tweets which don't have any words left after processing? dropna does not work
+    print(f"Preprocessing results in empty tweets. Dropping empty sentences")
+    nan_value = float("NaN")
+    df.replace("", nan_value, inplace=True)
     df.dropna(axis=0, inplace=True)
 
     print(f"Splitting data")
