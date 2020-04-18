@@ -6,3 +6,5 @@ initial_embeddings.kv
 data
 venv
 Jurafsky SNLP
+__pycache__
+.DS_Store
