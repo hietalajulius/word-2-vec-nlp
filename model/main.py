@@ -12,7 +12,7 @@ from utils import get_model_name
 ############
 PROCESS_DATASETS = True
 CREATE_EMBEDDINGS = False
-TRAINING_MODULE = True
+TRAINING_MODULE = False
 
 if PROCESS_DATASETS:
     dataset_path = os.getcwd()
