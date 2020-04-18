@@ -11,7 +11,7 @@ from utils import get_model_name
 # INPUTS
 ############
 PROCESS_DATASETS = False
-CREATE_EMBEDDINGS = False
+CREATE_EMBEDDINGS = True
 TRAINING_MODULE = True
 
 if PROCESS_DATASETS:
@@ -47,15 +47,15 @@ if TRAINING_MODULE:
         {'MAX_VOCAB_SIZE': [500e3],  # needs to match pretrained word2vec model params
          'min_freq': [1],  # needs to match pretrained word2vec model params
          'embedding_dim': [100],  # only needed if not pretrained
-         'pretrained': [False],
+         'pretrained': [True],
          'vectors': ['word2vec_twitter_skipgram_v100.mdl'],  # needs to match pretrained word2vec model params
-         'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
+         'RNN_FREEZE_EMDEDDINGS': [True, False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
-         'RNN_N_LAYERS': [1, 3],  # 3 layers in  Howard et. al (2018)
-         'RNN_DROPOUT': [0.4, 0.5],  # 0.4
-         'RNN_USE_GRU': [False, True],  # True: use GRU, False: use LSTM
+         'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
+         'RNN_DROPOUT': [0.4],  # 0.4
+         'RNN_USE_GRU': [True],  # True: use GRU, False: use LSTM
          'RNN_BATCH_SIZE': [64],  # Kagglessa käytettiin 1024
-         'RNN_EPOCHS': [5]  # onko riittävä?
+         'RNN_EPOCHS': [10]  # onko riittävä?
          }]
 
     param_grid = list(ParameterGrid(params))

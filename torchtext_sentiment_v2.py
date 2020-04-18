@@ -1,3 +1,4 @@
+from sklearn.metrics import confusion_matrix
 import time
 import torch
 import torch.nn as nn
@@ -21,45 +22,40 @@ def binary_accuracy(preds, y):
     rounded_preds = torch.round(torch.sigmoid(preds))
     correct = (rounded_preds == y).float() #convert into float for division
     acc = correct.sum() / len(correct)
+
     return acc
 
 
-def evaluate_slack(classifier, testloader, print_every, device):
+def confusion_matrix(model, iterator, device):
     """
     :param classifier:
     :param testloader:
     :param print_every:
     :return:
     """
-    classifier.eval()
-    negative = 0
-    positive = 0
-    total = 0
-    pos_scores = {}
-    neg_scores = {}
 
     with torch.no_grad():
-        for i, (pad_input_seqs, input_seq_lengths, targets) in enumerate(testloader):
-            batch_size = pad_input_seqs.size(1)
+        for i, batch in enumerate(iterator):
+            if batch.SentimentText.nelement() > 0:
+                inputs = batch.SentimentText.to(device)
+                classes = batch.Sentiment.to(device)
+                text_lengths = [len(seq) for seq in batch.SentimentText]
+                outputs = model(inputs, text_lengths)
+                print(f"outputs.shape {outputs.shape}")
+                _, preds = torch.max(outputs, 1)
+                print(f"preds.shape {preds.shape}")
+                # Append batch prediction results
+                predlist = torch.cat([predlist, preds.view(-1).cpu()])
+                lbllist = torch.cat([lbllist, classes.view(-1).cpu()])
+                print(f"predlist.shape {predlist.shape}")
 
-            pad_input_seqs = pad_input_seqs.to(device)
+    # Confusion matrix
+    conf_mat = confusion_matrix(lbllist.numpy(), predlist.numpy())
+    print(conf_mat)
 
-            init_hidden = classifier.init_hidden(batch_size, device)
-            output = classifier(pad_input_seqs, input_seq_lengths, init_hidden)
-
-            out_flat = output.detach().numpy().argmax(axis=2)
-            predicted = torch.tensor(out_flat)
-
-            total += targets.size(0)
-            positive += (predicted == 1).sum().item()
-            negative += (predicted == 0).sum().item()
-
-            pos_scores.update({i: output.numpy().flatten()[1]})
-            neg_scores.update({i: output.numpy().flatten()[0]})
-
-            if (total % print_every == 0):
-                print("Counted:", total, "positive", positive / total, "negative", negative / total)
-    return positive, negative, total, pos_scores, neg_scores
+    # Per-class accuracy
+    class_accuracy = 100 * conf_mat.diagonal() / conf_mat.sum(1)
+    print(class_accuracy)
 
 
 def evaluate(model, iterator, criterion):
@@ -67,9 +63,7 @@ def evaluate(model, iterator, criterion):
     epoch_acc = 0
 
     model.eval()
-
     with torch.no_grad():
-
         for batch in iterator:
             # print(batch.SentimentText)
             if batch.SentimentText.nelement() > 0:
@@ -83,10 +77,24 @@ def evaluate(model, iterator, criterion):
 
                 epoch_loss += loss.item()
                 epoch_acc += acc.item()
+
             # else:
             # print(f"Found a non-empty Tensorlist {batch.SentimentText}")
 
     return epoch_loss / len(iterator), epoch_acc / len(iterator)
+
+
+def evaluate_sentences(model, sentence, TEXT, device):
+    from preprocessing import preprocess
+    from nltk.corpus import stopwords
+    stop_words = set(stopwords.words('english'))
+    model.eval()
+    tokenized = preprocess(sentence, stop_words, stem=False, stemmer=None)
+    indexed = [TEXT.vocab.stoi[t] for t in tokenized]
+    tensor = torch.LongTensor(indexed).to(device)
+    tensor = tensor.unsqueeze(1)
+    prediction = torch.sigmoid(model(tensor))
+    return prediction.item()
 
 
 def train_epoch(model, iterator, optimizer, criterion, device):
@@ -247,10 +255,20 @@ def analyse_sentiments(params=None,
         print(f'\tTrain Loss: {train_loss:.3f} | Train Acc: {train_acc * 100:.2f}%')
         print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
 
+    # TODO DO TESTS AND PLOT RESULT
     # Evaluate model performance
     model.load_state_dict(torch.load(f"{model_name}.pt"))
     # print(model)
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
 
+    confusion_matrix(model, test_iterator, device)
+
+    sentence = 'I hate this movie!!'
+    value = evaluate_sentences(model, sentence, TEXT, device)
+    print(f"'{sentence}' sentiment is {value}")
+
+    sentence = 'I love this movie!!'
+    value = evaluate_sentences(model, sentence, TEXT, device)
+    print(f"'{sentence}' sentiment is {value}")
     return test_loss, test_acc
