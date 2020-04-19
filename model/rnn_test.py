@@ -11,7 +11,7 @@ from model.utils import get_model_name
 # INPUTS
 ############
 PROCESS_DATASETS = False
-CREATE_EMBEDDINGS = False
+CREATE_EMBEDDINGS = True
 TRAINING_MODULE = True
 
 if PROCESS_DATASETS:
