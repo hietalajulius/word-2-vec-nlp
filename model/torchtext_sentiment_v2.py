@@ -5,12 +5,16 @@ import torch.nn as nn
 import torch.optim as optim
 import torchtext
 import torchtext.vocab
-from torchtext.vocab import GloVe
+# from torchtext.vocab import GloVe
 from torchtext.data import TabularDataset
 
-from embeddings import load_vectors
-from utils import epoch_time
-from gru import RNNModel, RNNModel2
+from model.embeddings import load_vectors
+from model.utils import epoch_time
+from model.gru import RNNModel, RNNModel2
+
+from model.preprocessing import preprocess
+import numpy as np
+from nltk.corpus import stopwords
 
 
 def binary_accuracy(preds, y):
@@ -18,47 +22,95 @@ def binary_accuracy(preds, y):
     Returns accuracy per batch, i.e. if you get 8/10 right, this returns 0.8, NOT 8
     """
 
-    #round predictions to the closest integer
+    # round predictions to the closest integer
     rounded_preds = torch.round(torch.sigmoid(preds))
-    correct = (rounded_preds == y).float() #convert into float for division
+    correct = (rounded_preds == y).float()  # convert into float for division
     acc = correct.sum() / len(correct)
 
     return acc
 
 
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import itertools
+
+    cmap = plt.cm.Blues
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt), horizontalalignment="center", color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.show()
+
+
 def confusion_matrix(model, iterator, device):
     """
-    :param classifier:
-    :param testloader:
-    :param print_every:
+
+    :param model:
+    :param iterator:
+    :param device:
     :return:
     """
-
+    predlist = torch.tensor([])
+    lbllist = torch.tensor([])
     with torch.no_grad():
         for i, batch in enumerate(iterator):
             if batch.SentimentText.nelement() > 0:
                 inputs = batch.SentimentText.to(device)
                 classes = batch.Sentiment.to(device)
                 text_lengths = [len(seq) for seq in batch.SentimentText]
-                outputs = model(inputs, text_lengths)
-                print(f"outputs.shape {outputs.shape}")
-                _, preds = torch.max(outputs, 1)
-                print(f"preds.shape {preds.shape}")
+                outputs = model(inputs, text_lengths).squeeze(1)
+                # print(f"outputs.shape {outputs.shape}")
+                # print(outputs)
                 # Append batch prediction results
-                predlist = torch.cat([predlist, preds.view(-1).cpu()])
+                # print(f"outputs.view(-1) {outputs.view(-1)}")
+                # print(f"classes.view(-1) {classes.view(-1)}")
+                # print(f"torch.sigmoid(outputs.view(-1))) {torch.sigmoid(outputs.view(-1))}")
+                # print(f" torch.round(torch.sigmoid(outputs.view(-1))) {torch.round(torch.sigmoid(outputs.view(-1)))}")
+                predlist = torch.cat([predlist, torch.round(torch.sigmoid(outputs.view(-1))).cpu()])
                 lbllist = torch.cat([lbllist, classes.view(-1).cpu()])
-                print(f"predlist.shape {predlist.shape}")
+                #print(f"predlist.shape {predlist.shape}")
+                #print(f"lbllist.shape {lbllist.shape}")
 
-    # Confusion matrix
-    conf_mat = confusion_matrix(lbllist.numpy(), predlist.numpy())
-    print(conf_mat)
+    stacked = torch.stack((lbllist, predlist), dim=1)
+    # print(f"stacked {stacked.shape}")
+    cmt = torch.zeros(2, 2, dtype=torch.int64)
+    for p in stacked:
+        # print(f"p is {p}")
+        tl, pl = p.tolist()
+        # print(f"tl is {tl}, pl is {pl}")
+        cmt[int(tl), int(pl)] = cmt[int(tl), int(pl)] + 1
 
-    # Per-class accuracy
-    class_accuracy = 100 * conf_mat.diagonal() / conf_mat.sum(1)
-    print(class_accuracy)
-
+    # print(f"cm is {cmt.shape} {cmt}")
+    classes = ('Negative', 'Positive')
+    plot_confusion_matrix(cmt.numpy(), classes, normalize=True, title='Confusion matrix')
 
 def evaluate(model, iterator, criterion):
+    """
+
+    :param model:
+    :param iterator:
+    :param criterion:
+    :return:
+    """
     epoch_loss = 0
     epoch_acc = 0
 
@@ -69,7 +121,7 @@ def evaluate(model, iterator, criterion):
             if batch.SentimentText.nelement() > 0:
 
                 text_lengths = [len(seq) for seq in batch.SentimentText]
-                predictions = model(batch.SentimentText, text_lengths)
+                predictions = model(batch.SentimentText, text_lengths).squeeze(1)
 
                 loss = criterion(predictions, batch.Sentiment)
 
@@ -85,15 +137,27 @@ def evaluate(model, iterator, criterion):
 
 
 def evaluate_sentences(model, sentence, TEXT, device):
-    from preprocessing import preprocess
-    from nltk.corpus import stopwords
+    """
+
+    :param model:
+    :param sentence:
+    :param TEXT:
+    :param device:
+    :return:
+    """
+
     stop_words = set(stopwords.words('english'))
     model.eval()
     tokenized = preprocess(sentence, stop_words, stem=False, stemmer=None)
+    print(f"tokenized {tokenized}")
     indexed = [TEXT.vocab.stoi[t] for t in tokenized]
+    length = [len(indexed)]
+    length_tensor = torch.LongTensor(length)
     tensor = torch.LongTensor(indexed).to(device)
-    tensor = tensor.unsqueeze(1)
-    prediction = torch.sigmoid(model(tensor))
+    print(f"tensor {tensor.shape} length {length}")
+    tensor = tensor.unsqueeze(0)
+    #print(f"tensor {tensor.shape} {tensor}")
+    prediction = torch.sigmoid(model(tensor, length_tensor))
     return prediction.item()
 
 
@@ -113,11 +177,7 @@ def train_epoch(model, iterator, optimizer, criterion, device):
         batch_size_var = text.size(0)
         # print(f"batch_size_var {batch_size_var}")
 
-
-        # model.init_hidden(batch_size_var, device)
-
-
-        predictions = model(text, text_lengths)
+        predictions = model(text, text_lengths).squeeze(1)
         # predictions = model(batch.SentimentText).squeeze(1)
         loss = criterion(predictions, y)
         acc = binary_accuracy(predictions, y)
@@ -134,8 +194,8 @@ def train_epoch(model, iterator, optimizer, criterion, device):
 def analyse_sentiments(params=None,
                        model_name=''):
     """
+
     :param params:
-    :param N_EPOCHS:
     :param model_name:
     :return:
     """
@@ -163,11 +223,11 @@ def analyse_sentiments(params=None,
                                 eos_token='<eos>'
                                 )
 
-    print(f"Most frequent words in vocab. {TEXT.vocab.freqs.most_common(20)}")
+
 
     LABEL = torchtext.data.LabelField(dtype=torch.float)
     datafields = [('Sentiment', LABEL), ('SentimentText', TEXT)]
-    train_set, val_set, test_set = TabularDataset.splits(path='data/',
+    train_set, val_set, test_set = TabularDataset.splits(path='../data/',
                                     train='processed_train.csv',
                                     validation='processed_val.csv',
                                     test='processed_test.csv',
@@ -179,15 +239,16 @@ def analyse_sentiments(params=None,
         vectors = load_vectors(fname=vector_name)
 
         # vectors = GloVe(name="6B", dim=100)
-        #vectors = 'glove.twitter.27B.100d'
+        # vectors = 'glove.twitter.27B.100d'
         TEXT.build_vocab(
                         train_set,
                         vectors=vectors,
                         unk_init=torch.Tensor.normal_
         )
+        print(f"Most frequent words in vocab. {TEXT.vocab.freqs.most_common(20)}")
         vectors = TEXT.vocab.vectors
-        print(vectors.shape)
-        print(vectors.shape[1])
+        # print(vectors.shape)
+        # print(vectors.shape[1])
         EMBEDDING_DIM = vectors.shape[1]
     else:
         TEXT.build_vocab(train_set,
@@ -196,7 +257,7 @@ def analyse_sentiments(params=None,
     LABEL.build_vocab(train_set)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(device)
+    print(f"Device used is {device}")
     # minimise badding for each sentence
     train_iterator, val_iterator, test_iterator = torchtext.data.BucketIterator.splits(
                                                                         (train_set, val_set, test_set),
@@ -208,6 +269,8 @@ def analyse_sentiments(params=None,
     pad_idx = TEXT.vocab.stoi[TEXT.pad_token]
     INPUT_DIM = len(TEXT.vocab)
     print(f"Vocab size is {INPUT_DIM}, emdebbing dim is {EMBEDDING_DIM}")
+
+
     model = RNNModel2(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
                     hidden_dim=HIDDEN_DIM,
@@ -218,6 +281,7 @@ def analyse_sentiments(params=None,
                     pad_idx=pad_idx,
                     use_gru=USE_GRU)
     print(model)
+
 
     if pretrained:
         model.embedding.weight.data.copy_(vectors)
@@ -241,37 +305,41 @@ def analyse_sentiments(params=None,
     model = model.to(device)
     criterion = criterion.to(device)
 
-    best_valid_loss = float('inf')
-    for epoch in range(N_EPOCHS):
-        start_time = time.time()
-        model, train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion, device)
-        valid_loss, valid_acc = evaluate(model, val_iterator, criterion)
-        end_time = time.time()
 
-        epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+    TRAIN = True
+    if TRAIN:
+        best_valid_loss = float('inf')
+        for epoch in range(N_EPOCHS):
+            start_time = time.time()
+            model, train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion, device)
+            valid_loss, valid_acc = evaluate(model, val_iterator, criterion)
+            end_time = time.time()
 
-        if valid_loss < best_valid_loss:
-            best_valid_loss = valid_loss
-            torch.save(model.state_dict(), f"{model_name}.pt")
+            epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
-        print(f'Epoch: {epoch + 1:02} | Epoch Time: {epoch_mins}m {epoch_secs}s')
-        print(f'\tTrain Loss: {train_loss:.3f} | Train Acc: {train_acc * 100:.2f}%')
-        print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                torch.save(model.state_dict(), f"{model_name}.pt")
+
+            print(f'Epoch: {epoch + 1:02} | Epoch Time: {epoch_mins}m {epoch_secs}s')
+            print(f'\tTrain Loss: {train_loss:.3f} | Train Acc: {train_acc * 100:.2f}%')
+            print(f'\t Val. Loss: {valid_loss:.3f} |  Val. Acc: {valid_acc * 100:.2f}%')
 
     # TODO DO TESTS AND PLOT RESULT
     # Evaluate model performance
     model.load_state_dict(torch.load(f"{model_name}.pt"))
     # print(model)
+
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
 
     confusion_matrix(model, test_iterator, device)
 
-    sentence = 'I hate this movie!!'
+    sentence = "This film is terrible"
     value = evaluate_sentences(model, sentence, TEXT, device)
     print(f"'{sentence}' sentiment is {value}")
 
-    sentence = 'I love this movie!!'
+    sentence = "This film is great"
     value = evaluate_sentences(model, sentence, TEXT, device)
     print(f"'{sentence}' sentiment is {value}")
     return test_loss, test_acc

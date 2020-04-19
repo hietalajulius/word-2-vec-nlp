@@ -54,7 +54,7 @@ class RNNModel(nn.Module):
         x = self.fc(x.squeeze(0))
         # print(f"x.shape {x.shape}")
         # x = F.log_softmax(output, dim=-1)
-        x = x.squeeze(1)
+        # x = x.squeeze(1)
         # print(f"x.shape {x.shape}")
         return x
 
@@ -123,8 +123,8 @@ class RNNModel2(nn.Module):
             x = self.dropout(torch.cat((hn[-2, :, :], hn[-1, :, :]), dim=1))
         # print(f"x.shape {x.shape}")
         x = self.fc(x.squeeze(0))
-        # print(f"x.shape {x.shape}")
+        #print(f"x.shape {x.shape} {x}")
         # x = F.log_softmax(output, dim=-1)
-        x = x.squeeze(1)
+        # x = x.squeeze(1)
         # print(f"x.shape {x.shape}")
         return x

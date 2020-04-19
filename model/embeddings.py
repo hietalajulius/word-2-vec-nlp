@@ -78,9 +78,10 @@ def load_vectors(fname):
     :param fname:
     :return:
     """
-    path_to_embeddings_file = os.getcwd()
+    path_to_embeddings_file = os.path.normpath(os.getcwd() + os.sep + os.pardir)
+    #print(f"path_to_embeddings_file {path_to_embeddings_file}")
     path_to_embeddings_file = os.path.join(path_to_embeddings_file, "data")
-    # path_to_embeddings_file = os.path.join(path_to_embeddings_file, fname)
+    print(f"path_to_embeddings_file {path_to_embeddings_file}")
     vectors = Vectors(name=f"{fname}",
                       cache=path_to_embeddings_file)
     return vectors

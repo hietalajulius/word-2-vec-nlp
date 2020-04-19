@@ -2,16 +2,16 @@ import os
 from sklearn.model_selection import ParameterGrid
 import time
 
-from embeddings import create_embeddings
-from torchtext_sentiment_v2 import analyse_sentiments
-from preprocessing import preprocess_text
-from utils import get_model_name
+from model.embeddings import create_embeddings
+from model.preprocessing import preprocess_text
+from model.torchtext_sentiment_v2 import analyse_sentiments
+from model.utils import get_model_name
 
 
 # INPUTS
 ############
 PROCESS_DATASETS = False
-CREATE_EMBEDDINGS = True
+CREATE_EMBEDDINGS = False
 TRAINING_MODULE = True
 
 if PROCESS_DATASETS:
@@ -74,8 +74,9 @@ if TRAINING_MODULE:
 
         test_accs.append(test_acc)
 
-    # TODO DO TESTS AND PLOT RESULT
+    for i, param in enumerate(param_grid):
+        print(f"param {param}")
+        print(f"test accuracy: {test_accs[i]}")
 
-for i, param in enumerate(param_grid):
-    print(f"param {param}")
-    print(f"test accuracy: {test_accs[i]}")
+
+# TODO DO TESTS AND PLOT RESULT
