@@ -49,7 +49,7 @@ if TRAINING_MODULE:
          'embedding_dim': [100],  # only needed if not pretrained
          'pretrained': [True],
          'vectors': ['word2vec_twitter_skipgram_v100.mdl'],  # needs to match pretrained word2vec model params
-         'RNN_FREEZE_EMDEDDINGS': [True, False],  # freeze
+         'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
          'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
          'RNN_DROPOUT': [0.4],  # 0.4
