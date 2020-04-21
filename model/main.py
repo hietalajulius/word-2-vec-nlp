@@ -18,7 +18,7 @@ STOP_WORDS = False
 
 if PROCESS_DATASETS:
     dataset_path = os.getcwd()
-    dataset_path = os.path.join(dataset_path, "data")
+    dataset_path = os.path.join(dataset_path, "../data")
     dataset_path = os.path.join(dataset_path, "training.1600000.processed.noemoticon.csv")
     preprocess_text(dataset_path, remove_stop_words=STOP_WORDS)
 

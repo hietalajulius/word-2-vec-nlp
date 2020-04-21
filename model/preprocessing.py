@@ -1,9 +1,4 @@
-
-# import nltk
-# nltk.download('punkt')
-# nltk.download('stopwords')
 from nltk.corpus import stopwords
-from  nltk.stem import SnowballStemmer
 
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -23,7 +18,7 @@ def preprocess(text, stop_words=[]):
     tokens = []
     for token in text.split():
         if token not in stop_words:
-            tokens.append(stemmer.stem(token))
+            tokens.append(token)
 
     return " ".join(tokens)
 
@@ -64,9 +59,14 @@ def preprocess_text(dataset_path, remove_stop_words=False):
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True, stratify=df.target)
     df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True, stratify=df_train.target)
 
-    df_train.to_csv("data/processed_train.csv", index=False)
-    df_val.to_csv("data/processed_val.csv", index=False)
-    df_test.to_csv("data/processed_test.csv", index=False)
+    if remove_stop_words:
+        stop_word_string = "stops_removed"
+    else:
+        stop_word_string = "stops_included"
+    df.to_csv("../data/processed_all_"+stop_word_string+".csv", index=False)
+    df_train.to_csv("../data/processed_train_"+stop_word_string+".csv", index=False)
+    df_val.to_csv("../data/processed_val_"+stop_word_string+".csv", index=False)
+    df_test.to_csv("../data/processed_test_"+stop_word_string+".csv", index=False)
 
     neg_samples = np.sum(df_train.target == 0)
     pos_samples = np.sum(df_train.target == 1)
