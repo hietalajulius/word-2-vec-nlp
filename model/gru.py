@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence
 
 class RNNModel(nn.Module):
     """
@@ -51,9 +51,9 @@ class RNNModel(nn.Module):
         else:
             hn, cn = hidden
             x = self.dropout(torch.cat((hn[-2, :, :], hn[-1, :, :]), dim=1))
-        print(f"x.shape {x.shape}")
+        #print(f"x.shape {x.shape}")
         x = self.fc(x.squeeze(0))
-        print(f"x.shape {x.shape} {x}")
+        #print(f"x.shape {x.shape} {x}")
         # x = F.log_softmax(output, dim=-1)
         # x = x.squeeze(1)
         # print(f"x.shape {x.shape}")

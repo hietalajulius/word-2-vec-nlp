@@ -5,16 +5,18 @@ import torch.nn as nn
 import torch.optim as optim
 import torchtext
 import torchtext.vocab
-# from torchtext.vocab import GloVe
 from torchtext.data import TabularDataset
 
 from embeddings import load_vectors
 from utils import epoch_time
-from gru import RNNModel, RNNModel2
+from gru import RNNModel
 
 from preprocessing import preprocess
 import numpy as np
 from nltk.corpus import stopwords
+
+import matplotlib.pyplot as plt
+import itertools
 
 
 def binary_accuracy(preds, y):
@@ -31,9 +33,7 @@ def binary_accuracy(preds, y):
 
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import itertools
+
 
     cmap = plt.cm.Blues
     if normalize:
