@@ -271,7 +271,7 @@ def analyse_sentiments(params=None,
     print(f"Vocab size is {INPUT_DIM}, emdebbing dim is {EMBEDDING_DIM}")
 
 
-    model = RNNModel2(vocab_size=INPUT_DIM,
+    model = RNNModel(vocab_size=INPUT_DIM,
                     embedding_dim=EMBEDDING_DIM,
                     hidden_dim=HIDDEN_DIM,
                     output_dim=OUTPUT_DIM,
