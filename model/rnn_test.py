@@ -2,10 +2,10 @@ import os
 from sklearn.model_selection import ParameterGrid
 import time
 
-from model.embeddings import create_embeddings
-from model.preprocessing import preprocess_text
-from model.torchtext_sentiment_v2 import analyse_sentiments
-from model.utils import get_model_name
+from embeddings import create_embeddings
+from preprocessing import preprocess_text
+from torchtext_sentiment_v2 import analyse_sentiments
+from utils import get_model_name
 
 
 # INPUTS

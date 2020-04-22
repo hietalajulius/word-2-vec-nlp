@@ -8,11 +8,11 @@ import torchtext.vocab
 # from torchtext.vocab import GloVe
 from torchtext.data import TabularDataset
 
-from model.embeddings import load_vectors
-from model.utils import epoch_time
-from model.gru import RNNModel, RNNModel2
+from embeddings import load_vectors
+from utils import epoch_time
+from gru import RNNModel, RNNModel2
 
-from model.preprocessing import preprocess
+from preprocessing import preprocess
 import numpy as np
 from nltk.corpus import stopwords
 
