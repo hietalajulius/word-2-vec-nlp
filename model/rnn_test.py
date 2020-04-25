@@ -10,7 +10,7 @@ from utils import get_model_name
 
 # INPUTS
 ############
-PROCESS_DATASETS = False
+PROCESS_DATASETS = True
 CREATE_EMBEDDINGS = False
 TRAINING_MODULE = True
 training_mode = True

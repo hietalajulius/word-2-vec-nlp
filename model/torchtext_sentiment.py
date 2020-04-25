@@ -177,7 +177,7 @@ def evaluate_sentences(model, sentence, TEXT, device):
     tensor = torch.LongTensor(indexed).to(device)
     # print(f"tensor {tensor.shape} length {length}")
     tensor = tensor.unsqueeze(0)
-    print(f"model(tensor, length_tensor) {model(tensor, length_tensor).shape} {model(tensor, length_tensor)}")
+    print(f"model output before sigmoid {model(tensor, length_tensor)}")
     prediction = torch.sigmoid(model(tensor, length_tensor))
     return prediction.item()
 
@@ -195,9 +195,6 @@ def train_epoch(model, iterator, optimizer, criterion, device):
         # print(f"text.shape is {text.shape}")
         text_lengths = [len(seq) for seq in text]
         # print(f"text_lengths is {text_lengths}")
-        batch_size_var = text.size(0)
-        # print(f"batch_size_var {batch_size_var}")
-
         predictions = model(text, text_lengths).squeeze(1)
         # predictions = model(batch.SentimentText).squeeze(1)
         loss = criterion(predictions, y)
