@@ -7,7 +7,7 @@ def get_model_name(param):
     :param param:
     :return:
     """
-    if param['vectors'] == None:
+    if param['pretrained_vectors'] == None:
         model_name = f"own"
     else:
         model_name = f"{param['vectors'].split('.')[0]}"
@@ -20,7 +20,7 @@ def get_model_name(param):
     model_name += f"_{param['RNN_EPOCHS']}_epochs" \
                   f"_{param['RNN_N_LAYERS']}"
 
-
+    print(f"model name is {model_name}")
     return model_name
 
 def get_vector(embeddings, word):

@@ -33,10 +33,8 @@ class RNNModel(nn.Module):
                                bidirectional=bidirectional,
                                dropout=0 if n_layers < 2 else dropout,
                                batch_first=True)
-        if bidirectional:
-            self.fc = nn.Linear(hidden_dim * 2, output_dim)
-        else:
-            self.fc = nn.Linear(hidden_dim, output_dim)
+
+        self.fc = nn.Linear(hidden_dim * self.direction, output_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, text, text_lengths):
@@ -53,8 +51,5 @@ class RNNModel(nn.Module):
             x = self.dropout(torch.cat((hn[-2, :, :], hn[-1, :, :]), dim=1))
         #print(f"x.shape {x.shape}")
         x = self.fc(x.squeeze(0))
-        #print(f"x.shape {x.shape} {x}")
-        # x = F.log_softmax(output, dim=-1)
-        # x = x.squeeze(1)
-        # print(f"x.shape {x.shape}")
+        # print(f"x.shape {x.shape} {x}")
         return x

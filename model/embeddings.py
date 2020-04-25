@@ -81,7 +81,7 @@ def load_vectors(fname):
     path_to_embeddings_file = os.path.normpath(os.getcwd() + os.sep + os.pardir)
     #print(f"path_to_embeddings_file {path_to_embeddings_file}")
     path_to_embeddings_file = os.path.join(path_to_embeddings_file, "data")
-    print(f"path_to_embeddings_file {path_to_embeddings_file}")
+    print(f"path_to_embeddings_file {path_to_embeddings_file}, {fname}")
     vectors = Vectors(name=f"{fname}",
                       cache=path_to_embeddings_file)
     return vectors

@@ -15,7 +15,7 @@ def decode_sentiment(label):
     decode_map = {0: 0, 2: "NEUTRAL", 4: 1}
     return decode_map[int(label)]
 
-
+"""
 def preprocess(text, stop_words, stem=False, stemmer=None):
     # Remove link,user and special characters
     TEXT_CLEANING_RE = "@\S+|https?:\S+|http?:\S|[^A-Za-z0-9]+"
@@ -28,6 +28,19 @@ def preprocess(text, stop_words, stem=False, stemmer=None):
             else:
                 tokens.append(token)
     return " ".join(tokens)
+"""
+
+def preprocess(text, stop_words, stem=False, stemmer=None):
+    # Remove link,user and special characters
+    TEXT_CLEANING_RE = "@\S+|https?:\S+|http?:\S|[^A-Za-z0-9]+"
+    text = re.sub(TEXT_CLEANING_RE, ' ', str(text).lower()).strip()
+    tokens = []
+    for token in text.split():
+        if stem:
+            tokens.append(stemmer.stem(token))
+        else:
+            tokens.append(token)
+    return " ".join(tokens)
 
 
 def preprocess_text(dataset_path, stem=False):
@@ -39,6 +52,8 @@ def preprocess_text(dataset_path, stem=False):
     print(f"Preprocessing twitter dataset. "
           f"Removing stop words and cleaning hastags etc."
           f"")
+
+
     if stem:
         print(f"Applying stemmer")
     DATASET_COLUMNS = ["target", "ids", "date", "flag", "user", "text"]
@@ -65,9 +80,9 @@ def preprocess_text(dataset_path, stem=False):
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True, stratify=df.target)
     df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True, stratify=df_train.target)
 
-    df_train.to_csv("data/processed_train.csv", index=False)
-    df_val.to_csv("data/processed_val.csv", index=False)
-    df_test.to_csv("data/processed_test.csv", index=False)
+    df_train.to_csv("../data/processed_train.csv", index=False)
+    df_val.to_csv("../data/processed_val.csv", index=False)
+    df_test.to_csv("../data/processed_test.csv", index=False)
 
     neg_samples = np.sum(df_train.target == 0)
     pos_samples = np.sum(df_train.target == 1)
