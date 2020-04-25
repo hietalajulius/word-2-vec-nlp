@@ -56,7 +56,7 @@ if TRAINING_MODULE:
          'RNN_FREEZE_EMDEDDINGS': [True, False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
          'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
-         'RNN_DROPOUT': [0.4],  # 0.4
+         'RNN_DROPOUT': [0.4],  # 0.4put
          'RNN_USE_GRU': [False],  # True: use GRU, False: use LSTM
          'RNN_BATCH_SIZE': [128],  # Kagglessa käytettiin 1024
          'RNN_EPOCHS': [10]  # onko riittävä?

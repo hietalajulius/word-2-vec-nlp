@@ -17,6 +17,7 @@ import numpy as np
 from nltk.corpus import stopwords
 
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import itertools
 
 
