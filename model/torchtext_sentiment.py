@@ -76,6 +76,7 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
         fpath = os.path.join(fpath, "data")
         fname = 'cm_' + fname
         fpath = os.path.join(fpath, fname)
+        fpath = os.path.join(fpath, '.png')
         plt.savefig(fname=fpath)
 
         # plt.show()
