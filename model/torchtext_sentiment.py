@@ -343,7 +343,7 @@ def analyse_sentiments(params=None,
     test_loss, test_acc = evaluate(model, test_iterator, criterion)
     print(f'Test Loss: {test_loss:.3f} | Test Acc: {test_acc * 100:.2f}%')
 
-    confusion_matrix(model, test_iterator, device, fname=model_name)
+    confusion_matrix(model, test_iterator, device=device, fname=model_name)
 
     sentence = "got a whole new wave of depression when i saw it was my rafa's losing match  I HATE YOU SODERLING"
     value = evaluate_sentences(model, sentence, TEXT, device)
