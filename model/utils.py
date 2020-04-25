@@ -10,7 +10,7 @@ def get_model_name(param):
     if param['pretrained_vectors'] == None:
         model_name = f"own"
     else:
-        model_name = f"{param['vectors'].split('.')[0]}"
+        model_name = f"{param['pretrained_vectors'].split('.')[0]}"
 
     if param['RNN_USE_GRU']:
         model_name += f"_GRU"
