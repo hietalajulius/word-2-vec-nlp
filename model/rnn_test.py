@@ -59,7 +59,7 @@ if TRAINING_MODULE:
          'RNN_DROPOUT': [0.4],  # 0.4put
          'RNN_USE_GRU': [False],  # True: use GRU, False: use LSTM
          'RNN_BATCH_SIZE': [128],  # Kagglessa käytettiin 1024
-         'RNN_EPOCHS': [0]  # onko riittävä?
+         'RNN_EPOCHS': [10]  # onko riittävä?
          }]
 
     param_grid = list(ParameterGrid(params))
