@@ -10,7 +10,7 @@ from utils import get_model_name
 
 # INPUTS
 ############
-PROCESS_DATASETS = True
+PROCESS_DATASETS = False
 CREATE_EMBEDDINGS = False
 TRAINING_MODULE = True
 training_mode = True
@@ -53,7 +53,7 @@ if TRAINING_MODULE:
              'with_stops_cbow_True_window_8_size_300_noise_20_iters_30_accuracy_0.2138377641445126.kv',
              'with_stops_cbow_True_window_20_size_300_noise_2_iters_10_accuracy_0_0434.kv'
              ],  # needs to match pretrained word2vec model params
-         'RNN_FREEZE_EMDEDDINGS': [True, False],  # freeze
+         'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
          'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
          'RNN_DROPOUT': [0.4],  # 0.4put
