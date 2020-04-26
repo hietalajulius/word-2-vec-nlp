@@ -49,11 +49,11 @@ if TRAINING_MODULE:
          'min_freq': [1],  # needs to match pretrained word2vec model params
          'embedding_dim': [300],  # only needed if not pretrained
          'pretrained_vectors': [
-              None,
+              #None,
              'with_stops_cbow_True_window_8_size_300_noise_20_iters_30_accuracy_0.2138377641445126.kv',
-             'with_stops_cbow_True_window_20_size_300_noise_2_iters_10_accuracy_0_0434.kv'
-             ],  # needs to match pretrained word2vec model params
-         'RNN_FREEZE_EMDEDDINGS': [False],  # freeze
+             'with_stops_cbow_True_window_8_size_600_noise_2_iters_10_accuracy_0.05248807089297887.kv'
+             ], 
+         'RNN_FREEZE_EMDEDDINGS': [True],  # freeze
          'RNN_HIDDEN_DIM': [256],  # 128 tai 256
          'RNN_N_LAYERS': [1],  # 3 layers in  Howard et. al (2018)
          'RNN_DROPOUT': [0.4],  # 0.4put
