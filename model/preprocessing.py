@@ -10,8 +10,8 @@ def decode_sentiment(label):
     decode_map = {0: 0, 2: "NEUTRAL", 4: 1}
     return decode_map[int(label)]
 
-
-def preprocess(text, stop_words=[]):
+"""
+def preprocess(text, stop_words, stem=False, stemmer=None):
     # Remove link,user and special characters
     TEXT_CLEANING_RE = "@\S+|https?:\S+|http?:\S|[^A-Za-z0-9]+"
     text = re.sub(TEXT_CLEANING_RE, ' ', str(text).lower()).strip()
@@ -20,6 +20,19 @@ def preprocess(text, stop_words=[]):
         if token not in stop_words:
             tokens.append(token)
 
+    return " ".join(tokens)
+"""
+
+def preprocess(text, stop_words, stem=False, stemmer=None):
+    # Remove link,user and special characters
+    TEXT_CLEANING_RE = "@\S+|https?:\S+|http?:\S|[^A-Za-z0-9]+"
+    text = re.sub(TEXT_CLEANING_RE, ' ', str(text).lower()).strip()
+    tokens = []
+    for token in text.split():
+        if stem:
+            tokens.append(stemmer.stem(token))
+        else:
+            tokens.append(token)
     return " ".join(tokens)
 
 
@@ -33,6 +46,9 @@ def preprocess_text(dataset_path, remove_stop_words=False):
           f"Removing stop words and cleaning hastags etc."
           f"")
 
+
+    if stem:
+        print(f"Applying stemmer")
     DATASET_COLUMNS = ["target", "ids", "date", "flag", "user", "text"]
     DATASET_ENCODING = "ISO-8859-1"
     # dataset_path = r'train.csv'
@@ -59,14 +75,9 @@ def preprocess_text(dataset_path, remove_stop_words=False):
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True, stratify=df.target)
     df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True, stratify=df_train.target)
 
-    if remove_stop_words:
-        stop_word_string = "stops_removed"
-    else:
-        stop_word_string = "stops_included"
-    df.to_csv("../data/processed_all_"+stop_word_string+".csv", index=False)
-    df_train.to_csv("../data/processed_train_"+stop_word_string+".csv", index=False)
-    df_val.to_csv("../data/processed_val_"+stop_word_string+".csv", index=False)
-    df_test.to_csv("../data/processed_test_"+stop_word_string+".csv", index=False)
+    df_train.to_csv("../data/processed_train.csv", index=False)
+    df_val.to_csv("../data/processed_val.csv", index=False)
+    df_test.to_csv("../data/processed_test.csv", index=False)
 
     neg_samples = np.sum(df_train.target == 0)
     pos_samples = np.sum(df_train.target == 1)

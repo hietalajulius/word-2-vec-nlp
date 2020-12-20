@@ -1,2 +1,2 @@
-# aalto-snlp-2020
+# Word2Vec NLP
 SNLP project 2020
