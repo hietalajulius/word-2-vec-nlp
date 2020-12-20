@@ -1,2 +1,6 @@
 # Word2Vec NLP
-SNLP project 2020
+![alt text](https://github.com/hietalajulius/word-2-vec-nlp/blob/master/cover.png?raw=true)
+
+## Word2Vec
+
+## NLP sentiment analysis
