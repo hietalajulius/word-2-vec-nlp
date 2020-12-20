@@ -1,0 +1,2 @@
+,model,capital-common-countries,capital-world,currency,city-in-state,family,gram1-adjective-to-adverb,gram2-opposite,gram3-comparative,gram3-superl,participle,nationality-adj,past-tense,plural noun,plural verb,total-accuracy
+0,with_stops_cbow_True_window_8_size_600_noise_2_iters_10,0.01948051948051948,0.0137429264349232,0.0,0.016619375760032428,0.2785714285714286,0.004301075268817204,0.005,0.13288288288288289,0.008522727272727272,0.17234848484848486,0.03175895765472313,0.1564102564102564,0.08783783783783784,0.029556650246305417,0.06700749829584185

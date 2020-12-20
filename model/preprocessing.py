@@ -1,9 +1,4 @@
-
-# import nltk
-# nltk.download('punkt')
-# nltk.download('stopwords')
 from nltk.corpus import stopwords
-from  nltk.stem import SnowballStemmer
 
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -16,21 +11,19 @@ def decode_sentiment(label):
     return decode_map[int(label)]
 
 
-def preprocess(text, stop_words, stem=False, stemmer=None):
+def preprocess(text, stop_words=[]):
     # Remove link,user and special characters
     TEXT_CLEANING_RE = "@\S+|https?:\S+|http?:\S|[^A-Za-z0-9]+"
     text = re.sub(TEXT_CLEANING_RE, ' ', str(text).lower()).strip()
     tokens = []
     for token in text.split():
         if token not in stop_words:
-            if stem:
-                tokens.append(stemmer.stem(token))
-            else:
-                tokens.append(token)
+            tokens.append(token)
+
     return " ".join(tokens)
 
 
-def preprocess_text(dataset_path, stem=False):
+def preprocess_text(dataset_path, remove_stop_words=False):
     """
 
     :param dataset_path:
@@ -39,8 +32,7 @@ def preprocess_text(dataset_path, stem=False):
     print(f"Preprocessing twitter dataset. "
           f"Removing stop words and cleaning hastags etc."
           f"")
-    if stem:
-        print(f"Applying stemmer")
+
     DATASET_COLUMNS = ["target", "ids", "date", "flag", "user", "text"]
     DATASET_ENCODING = "ISO-8859-1"
     # dataset_path = r'train.csv'
@@ -50,10 +42,12 @@ def preprocess_text(dataset_path, stem=False):
                      usecols=[0, 5])
     df.target = df.target.apply(lambda x: decode_sentiment(x))
 
-    stop_words = set(stopwords.words('english'))
-    stemmer = SnowballStemmer("english")
-
-    df.text = df.text.apply(lambda x: preprocess(x, stop_words, stem=stem, stemmer=stemmer))
+    if remove_stop_words:
+        stop_words = set(stopwords.words('english'))
+        df.text = df.text.apply(lambda x: preprocess(x, stop_words))
+    else:
+        df.text = df.text.apply(lambda x: preprocess(x))
+    
 
     print(f"Preprocessing results in empty tweets. Dropping empty sentences")
     nan_value = float("NaN")
@@ -65,9 +59,14 @@ def preprocess_text(dataset_path, stem=False):
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=10, shuffle=True, stratify=df.target)
     df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=10, shuffle=True, stratify=df_train.target)
 
-    df_train.to_csv("data/processed_train.csv", index=False)
-    df_val.to_csv("data/processed_val.csv", index=False)
-    df_test.to_csv("data/processed_test.csv", index=False)
+    if remove_stop_words:
+        stop_word_string = "stops_removed"
+    else:
+        stop_word_string = "stops_included"
+    df.to_csv("../data/processed_all_"+stop_word_string+".csv", index=False)
+    df_train.to_csv("../data/processed_train_"+stop_word_string+".csv", index=False)
+    df_val.to_csv("../data/processed_val_"+stop_word_string+".csv", index=False)
+    df_test.to_csv("../data/processed_test_"+stop_word_string+".csv", index=False)
 
     neg_samples = np.sum(df_train.target == 0)
     pos_samples = np.sum(df_train.target == 1)
